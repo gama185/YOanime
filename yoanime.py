@@ -179,4 +179,10 @@ _تم الرفع بواسطة بوت يو أنمي ✅_"""
                 break  # لإتاحة خيار الاستئناف اليدوي لاحقًا
 
 # تشغيل الدالة
-await upload_multiple_episodes()
+async def main():
+    await upload_multiple_episodes()
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
+    
