@@ -3,30 +3,25 @@ import requests, os, asyncio, time
 from tqdm import tqdm
 from telethon.sync import TelegramClient
 from telethon.tl.functions.messages import SendMessageRequest
+from telethon.sessions import StringSession
+import tgcrypto  # إضافة مكتبة TgCrypto لتحسين التشفير
 
 nest_asyncio.apply()
 
 # بيانات تيليغرام
 api_id = 28420794
 api_hash = "76124567461794b385b282f876fc81a3"
-channel_username = "@narutooclsh"
+channel_username = "@northsollo"
 notify_user_id = 7209819472
 
 # بيانات الأنمي
-anime_name = "Naruto Shippuden"
-duration_minutes = 24
+anime_name = "Solo Leveling"
 quality = "1080p"
+thumbnail_path = "North.png"  # تحديد صورة المصغرة
 
 uploaded_log = "uploaded.log"
 used_links_file = "used_links.log"
 links_file = "links.txt"
-
-# تحويل روابط Google Drive
-def convert_to_download_link(link):
-    if "drive.google.com" in link and "/file/d/" in link:
-        file_id = link.split("/file/d/")[1].split("/")[0]
-        return f"https://drive.google.com/uc?export=download&id={file_id}"
-    return link
 
 # تحميل الفيديو
 def download_video(url, output_path):
@@ -48,17 +43,20 @@ def progress_callback(current, total):
         progress_bar = tqdm(total=total, unit='B', unit_scale=True, desc="📤 رفع الفيديو")
     progress_bar.update(current - progress_bar.n)
 
-# رفع الفيديو
-async def upload_file(client, file_name, caption):
+# رفع الفيديو باستخدام TgCrypto
+async def upload_file(client, file_name, caption, thumbnail=None):
     global progress_bar
     try:
         progress_bar = None
+        # استخدام TgCrypto لرفع الملفات بشكل أسرع
         await client.send_file(
             entity=channel_username,
             file=file_name,
             caption=caption,
+            thumbnail=thumbnail,  # تمرير صورة المصغرة
             supports_streaming=True,
-            progress_callback=progress_callback
+            progress_callback=progress_callback,
+            use_tgcrypto=True  # تمكين استخدام TgCrypto لتحسين السرعة
         )
         if progress_bar:
             progress_bar.close()
@@ -129,7 +127,7 @@ async def upload_multiple_episodes():
         return
 
     with open(links_file, "r") as f:
-        all_links = [convert_to_download_link(line.strip()) for line in f if line.strip()]
+        all_links = [line.strip() for line in f if line.strip()]
 
     used_links = load_used_links()
     filtered_links = []
@@ -159,14 +157,9 @@ async def upload_multiple_episodes():
                 download_video(link, file_name)
                 time.sleep(1)
 
-                caption = f"""🎬 **{anime_name}**
-🧩 الحلقة: {episode_number}
-🕒 المدة: {duration_minutes} دقيقة
-📺 الجودة: {quality}
+                caption = f"""🎬 **{anime_name}** - الحلقة {episode_number} {quality}"""
 
-_تم الرفع بواسطة بوت يو أنمي ✅_"""
-
-                success = await upload_file(client, file_name, caption)
+                success = await upload_file(client, file_name, caption, thumbnail=thumbnail_path)
                 if success:
                     os.remove(file_name)
                     print("🗑️ تم حذف الملف بعد الرفع.\n")
@@ -185,4 +178,3 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
-    
