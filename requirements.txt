@@ -1,4 +1,6 @@
 telethon
 requests
-tqdm
 nest_asyncio
+tqdm
+tgcrypto
+
